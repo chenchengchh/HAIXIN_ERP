@@ -1,0 +1,61 @@
+server:
+  port: 8093
+  # Servlet 编码配置：强制 HTTP 请求与响应统一使用 UTF-8 字符集，防止中文乱码
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+
+spring:
+  application:
+    name: scm-service
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/scm_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:scm_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        group: DEFAULT_GROUP
+        import-check:
+          enabled: false
+  config:
+    import: optional:nacos:localhost:8848
+  # 字符集配置
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-request: true
+      force-response: true
+
+scm:
+  master-data:
+    supplier-write-enabled: false
+  integration:
+    po-event-retry-delay-ms: 60000
+    wms-base-url: ${SCM_WMS_BASE_URL:http://wms:8086}
+    erp-base-url: ${SCM_ERP_BASE_URL:http://erp:8081}
+    po-event:
+      srm-enabled: true
+      wms-enabled: true
+      erp-enabled: true

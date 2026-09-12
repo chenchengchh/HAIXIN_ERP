@@ -1,0 +1,5 @@
+USE mysql;
+
+CREATE USER IF NOT EXISTS 'erp_app'@'%' IDENTIFIED BY 'root';
+GRANT ALL PRIVILEGES ON `erp_db`.* TO 'erp_app'@'%';
+FLUSH PRIVILEGES;

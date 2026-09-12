@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/aps_db?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: aps_app
+    password: root
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+      config:
+        server-addr: nacos:8848
+  config:
+    import: optional:nacos:nacos:8848
+  mvc:
+    contentnegotiation:
+      favor-parameter: false
+      favor-path-extension: true
+      default-media-type: application/json
+    media-types:
+      json: application/json;charset=UTF-8
+      yaml: text/yaml
+      yml: text/yaml
+      xml: application/xml
+      xhtml: application/xhtml+xml
+      html: text/html

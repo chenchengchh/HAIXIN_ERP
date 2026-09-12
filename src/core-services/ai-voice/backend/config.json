@@ -1,0 +1,72 @@
+{
+    "version": "2.0.0",
+    "server": {
+        "host": "0.0.0.0",
+        "port": 8000,
+        "log_level": "info",
+        "health_check_interval_s": 30,
+        "max_request_size_mb": 10
+    },
+    "vad": {
+        "silence_threshold_ms": 2.0,
+        "max_sentence_duration_s": 15.0,
+        "silence_rms_threshold": 300,
+        "speech_rms_threshold": 500,
+        "vad_energy_threshold": 2000,
+        "vad_frames_window": 5,
+        "min_speech_duration_s": 0.4
+    },
+    "audio": {
+        "sample_rate": 16000,
+        "max_buffer_duration_s": 25.0,
+        "channels": 1,
+        "sample_width": 2,
+        "chunk_size": 8000
+    },
+    "model": {
+        "base_path": "/app/models/speech_paraformer-small_asr_nat-zh-cn-16k-common-vocab8404",
+        "vad_model_path": "/app/models/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch",
+        "timestamp_model_path": "/app/models/iic/speech_timestamp_prediction-v1-16k-offline",
+        "download": {
+            "enabled": true,
+            "modelscope_cache_path": "~/.cache/modelscope/hub/models/damo/",
+            "timeout_s": 600
+        },
+        "inference": {
+            "beam_size": 15,
+            "ctc_weight": 0.6,
+            "max_len_ratio": 1.2,
+            "min_len_ratio": 0.03,
+            "use_timestamp": true,
+            "use_vad": true
+        },
+        "optimization": {
+            "lazy_load": true,
+            "cache_enabled": true,
+            "batch_size": 2,
+            "enable_fp16": false,
+            "enable_dynamic_batching": true
+        }
+    },
+    "system": {
+        "idle_timeout": 360,
+        "silence_timeout_s": 300,
+        "no_audio_timeout_s": 60,
+        "max_clients": 15,
+        "request_timeout_s": 30,
+        "retry_times": 3,
+        "retry_delay_ms": 1000
+    },
+    "websocket": {
+        "ping_interval_s": 30,
+        "pong_timeout_s": 10,
+        "max_message_size_bytes": 1048576
+    },
+    "logging": {
+        "level": "info",
+        "file_path": "/app/logs/ai-voice-service.log",
+        "max_file_size_mb": 100,
+        "backup_count": 5,
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    }
+}

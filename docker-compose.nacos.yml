@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Nacos服务注册与发现
+  nacos:
+    image: nacos/nacos-server:v2.2.3
+    container_name: nacos
+    environment:
+      - MODE=standalone
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=mysql
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_DB_NAME=nacos_config
+      - MYSQL_SERVICE_USER=root
+      - MYSQL_SERVICE_PASSWORD=root
+      - NACOS_AUTH_ENABLE=false
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    volumes:
+      - nacos_data:/home/nacos/data
+      - nacos_logs:/home/nacos/logs
+    restart: always
+    networks:
+      - hxcoe-network
+
+# 网络配置
+networks:
+  hxcoe-network:
+    driver: bridge
+
+# 数据卷配置
+volumes:
+  nacos_data:
+  nacos_logs:

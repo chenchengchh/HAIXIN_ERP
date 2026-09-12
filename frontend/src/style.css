@@ -1,0 +1,207 @@
+/* Global Styles & Variables - 海星数字化系统 */
+:root {
+  /* Brand Colors - 海洋主题渐变体系 */
+  --primary-color: #2563eb; /* 海洋蓝 600 */
+  --primary-hover: #1d4ed8; /* 蓝 700 */
+  --primary-active: #1e40af; /* 蓝 800 */
+  --primary-light: #eff6ff; /* 蓝 50 */
+  --primary-light-9: #eff6ff; /* Element Plus 风格浅色（菜单悬停/激活背景） */
+  --primary-cyan: #0ea5e9; /* 天青色（渐变辅助） */
+  --brand-gradient: linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%);
+
+  /* Semantic Colors */
+  --success-color: #10b981; /* Emerald 500 */
+  --warning-color: #f59e0b; /* Amber 500 */
+  --danger-color: #ef4444; /* Red 500 */
+  --info-color: #06b6d4; /* Cyan 500 */
+
+  /* Text Colors */
+  --text-primary: #111827; /* Gray 900 */
+  --text-regular: #374151; /* Gray 700 */
+  --text-secondary: #6b7280; /* Gray 500 */
+  --text-placeholder: #9ca3af; /* Gray 400 */
+
+  /* Background Colors */
+  --bg-body: #f2f5fa; /* 冷灰蓝页面底色 */
+  --bg-color: #f2f5fa; /* 布局背景（与 --bg-body 保持一致） */
+  --bg-container: #ffffff;
+  --bg-hover: #f9fafb; /* Gray 50 */
+
+  /* Borders */
+  --border-color: #e5e7eb; /* Gray 200（布局边框通用别名） */
+  --border-color-base: #e5e7eb; /* Gray 200 */
+  --border-color-light: #f3f4f6; /* Gray 100 */
+  --border-radius-base: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+  --shadow-base: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-brand: 0 8px 20px -6px rgba(37, 99, 235, 0.35);
+
+  /* Fonts */
+  --font-family: 'PingFang SC', 'Microsoft YaHei', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Transitions */
+  --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-family);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Utility Classes */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-primary { color: var(--primary-color); }
+.text-success { color: var(--success-color); }
+.text-warning { color: var(--warning-color); }
+.text-danger { color: var(--danger-color); }
+
+.bg-white { background-color: white; }
+.shadow-md { box-shadow: var(--shadow-md); }
+.rounded-lg { border-radius: var(--border-radius-lg); }
+
+.mt-4 { margin-top: 1rem; }
+.mb-4 { margin-bottom: 1rem; }
+.p-4 { padding: 1rem; }
+
+/* Unified Child Route View Container */
+.child-router-view {
+  background: var(--bg-container);
+  border-radius: var(--border-radius-md);
+  padding: 24px;
+  min-height: calc(100vh - 120px);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-base);
+}
+
+.child-view-container {
+  @extend .child-router-view;
+}
+
+/* Element Plus Overrides */
+:root {
+  --el-color-primary: var(--primary-color);
+  --el-color-success: var(--success-color);
+  --el-color-warning: var(--warning-color);
+  --el-color-danger: var(--danger-color);
+  --el-border-radius-base: var(--border-radius-base);
+  --el-font-family: var(--font-family);
+}
+
+body {
+  font-family: var(--font-family);
+}
+
+.el-button {
+  font-weight: 500;
+}
+
+.el-card {
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-base);
+}
+
+.el-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.el-menu {
+  border-right: none;
+}
+
+/* 表格：表头淡色、行悬停柔和 */
+.el-table {
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-header-text-color: #475569;
+  --el-table-row-hover-bg-color: #f0f7ff;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+}
+
+/* 输入控件：圆角统一 */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: 8px;
+}
+
+/* 对话框 / 消息框：更柔和的圆角与阴影 */
+.el-dialog,
+.el-message-box {
+  border-radius: var(--border-radius-lg);
+}
+
+/* 主按钮：海洋渐变质感（仅默认主按钮，不破坏语义色按钮） */
+.el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
+  background: var(--brand-gradient);
+  border: none;
+  box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.4);
+  transition: var(--transition-base);
+}
+
+.el-button--primary:not(.is-plain):not(.is-text):not(.is-link):hover {
+  background: linear-gradient(90deg, #38bdf8 0%, #3b82f6 100%);
+  box-shadow: var(--shadow-brand);
+  transform: translateY(-1px);
+}
+
+/* 标签圆角 */
+.el-tag {
+  border-radius: 6px;
+}
+
+/* 分页圆角 */
+.el-pagination.is-background .el-pager li,
+.el-pagination.is-background .btn-prev,
+.el-pagination.is-background .btn-next {
+  border-radius: 6px;
+}

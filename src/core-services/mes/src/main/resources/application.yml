@@ -1,0 +1,90 @@
+server:
+  port: 8085
+  address: 0.0.0.0
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: mes-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        import-check:
+          enabled: false
+  config:
+    import: optional:nacos:localhost:8848
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/mes_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:mes_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+# 日志配置
+logging:
+  level:
+    com.hxcoe.mes: debug
+    org.springframework: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+# MES模块配置
+mes:
+  # 生产执行配置
+  production-execution:
+    default-work-center: MAIN_WC
+    standard-lot-size: 100
+    wip-track-enabled: true
+  # 过程监控配置
+  process-monitoring:
+    sampling-frequency: 1000  # 毫秒
+    abnormal-alarm-enabled: true
+    alarm-notification-channels: EMAIL, SMS
+  # 数据采集配置
+  data-collection:
+    real-time-enabled: true
+    historical-data-retention-days: 365
+  # 质量管控配置
+  quality-control:
+    inline-inspection-enabled: true
+    defect-classes: CRITICAL, MAJOR, MINOR
+  # 设备管理配置
+  equipment-management:
+    oee-calculation-enabled: true
+    preventive-maintenance-reminder-days: 7
+
+# 集成通信配置（与 ERP/SCM 对齐，默认 HTTP 模式）
+# transport: HTTP / RABBIT / REDIS_STREAM
+hxcoe:
+  integration:
+    transport: ${HXCOE_INTEGRATION_TRANSPORT:HTTP}
+    redis:
+      poll-delay-ms: ${HXCOE_INTEGRATION_REDIS_POLL_MS:1000}

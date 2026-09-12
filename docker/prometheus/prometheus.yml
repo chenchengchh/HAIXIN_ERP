@@ -1,0 +1,56 @@
+# Prometheus配置文件
+
+global:
+  scrape_interval: 15s  # 抓取间隔
+  evaluation_interval: 15s  # 评估间隔
+  
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  
+  # Spring Boot应用监控
+  - job_name: 'spring-boot-apps'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          # 系统服务
+          - 'registry:8081'
+          - 'config-center:8082'
+          - 'gateway:8083'
+          # 核心业务服务
+          - 'erp:8084'
+          - 'crm:8085'
+          - 'mes:8086'
+          - 'wms:8087'
+          - 'srm:8088'
+          # 业务支持服务
+          - 'oa:8089'
+  
+  # MySQL监控
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql:9104']
+  
+  # Redis监控
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:9121']
+  
+  # Nacos监控
+  - job_name: 'nacos'
+    static_configs:
+      - targets: ['nacos:8848']
+    metrics_path: '/nacos/actuator/prometheus'

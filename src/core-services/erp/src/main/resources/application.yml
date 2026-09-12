@@ -1,0 +1,110 @@
+server:
+  port: 8081
+  address: 0.0.0.0
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: erp-service
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: localhost:8848
+      config:
+        enabled: true
+        server-addr: localhost:8848
+        import-check:
+          enabled: false
+  config:
+    import: 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/erp_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:erp_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+# 日志配置
+logging:
+  level:
+    com.hxcoe.erp: info
+    org.springframework.web: info
+    org.springframework.transaction: info
+    org.hibernate: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/erp-service.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 100MB
+  logback:
+    rollingpolicy:
+      file-name-pattern: logs/erp-service.%d{yyyy-MM-dd}.%i.log
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 100MB
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+# ERP模块配置
+erp:
+  # 财务模块配置
+  finance:
+    tax-rate: 0.13
+    currency: CNY
+    task-process-delay-ms: 60000
+  # 供应链模块配置
+  supply-chain:
+    default-warehouse: MAIN_WH
+    safety-stock-rate: 0.2
+  # 生产模块配置
+  production:
+    default-workshop: MAIN_WS
+    standard-working-hours: 8
+  integration:
+    bom-base-url: ${ERP_BOM_BASE_URL:http://bom:8085}
+    srm-base-url: ${ERP_SRM_BASE_URL:http://srm:8092}
+    material-event-retry-delay-ms: 60000
+  # OA统一审批集成配置（审批完成后OA回调ERP的地址，Docker网络内服务名）
+  approval:
+    callback-base-url: ${ERP_APPROVAL_CALLBACK_BASE_URL:http://erp:8081}
+  master-data:
+    warehouse-write-enabled: false
+    warehouse-initializer-enabled: false
+  data-quality:
+    refresh-delay-ms: 86400000
+    refresh-initial-delay-ms: 60000
+
+hxcoe:
+  integration:
+    redis:
+      group-scm-po-events: erp-service
+      consumer-scm-po-events: erp-1
+    rabbit:
+      queue-scm-po-events-erp: erp.po-events.v1

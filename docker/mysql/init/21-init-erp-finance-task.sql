@@ -1,0 +1,31 @@
+USE erp_db;
+
+CREATE TABLE IF NOT EXISTS `erp_finance_task` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `fact_type` varchar(32) NOT NULL COMMENT '事实类型（RECEIPT_COMPLETED/IQC_COMPLETED）',
+  `source_type` varchar(16) NOT NULL DEFAULT 'PO' COMMENT '来源类型',
+  `source_no` varchar(64) NOT NULL COMMENT '来源单号（poNo）',
+  `ref_no` varchar(64) DEFAULT NULL COMMENT '引用号（receiptNo/qcNo）',
+  `result` varchar(32) DEFAULT NULL COMMENT '结果（如 PASS/FAIL）',
+  `payload_json` json DEFAULT NULL COMMENT '原始载荷',
+  `event_id` varchar(64) DEFAULT NULL COMMENT '事件ID',
+  `trace_id` varchar(64) DEFAULT NULL COMMENT '链路追踪ID',
+  `producer` varchar(64) DEFAULT NULL COMMENT '生产者服务名',
+  `event_version` int(11) DEFAULT '1' COMMENT '事件版本',
+  `partition_key` varchar(128) DEFAULT NULL COMMENT '分区键',
+  `idempotency_key` varchar(200) NOT NULL COMMENT '幂等键',
+  `status` varchar(16) NOT NULL DEFAULT 'PENDING',
+  `voucher_id` bigint(20) DEFAULT NULL COMMENT '关联凭证ID（erp_voucher.id）',
+  `retry_count` int(11) NOT NULL DEFAULT '0' COMMENT '重试次数',
+  `last_error` text DEFAULT NULL COMMENT '最后一次错误信息',
+  `processed_time` datetime DEFAULT NULL COMMENT '处理完成时间',
+  `created_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_erp_finance_task_idempotency_key` (`idempotency_key`),
+  KEY `idx_erp_finance_task_status` (`status`),
+  KEY `idx_erp_finance_task_source_no` (`source_no`),
+  KEY `idx_erp_finance_task_voucher_id` (`voucher_id`),
+  KEY `idx_erp_finance_task_trace_id` (`trace_id`),
+  KEY `idx_erp_finance_task_event_id` (`event_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ERP 财务待处理任务（最小闭环：引用 poNo/sourceNo）';

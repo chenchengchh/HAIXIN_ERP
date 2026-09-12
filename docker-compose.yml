@@ -1,0 +1,1039 @@
+version: '3.8'
+
+services:
+  # 基础设施服务
+  redis:
+    image: redis:7.0
+    container_name: redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=
+    volumes:
+      - ./docker/redis/data:/data
+      - ./docker/redis/conf:/usr/local/etc/redis
+    restart: always
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  nacos:
+    image: nacos/nacos-server:v2.3.0
+    container_name: nacos
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    environment:
+      - MODE=standalone
+      - JVM_XMS=512m
+      - JVM_XMX=512m
+      - NACOS_AUTH_ENABLE=false
+    volumes:
+      - nacos-data:/home/nacos/data
+      - nacos-logs:/home/nacos/logs
+    restart: always
+    networks:
+      - hxcoe-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8848/nacos/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hxcoe003
+      # 确保数据库使用utf8mb4字符集（推荐使用utf8mb4，支持完整Unicode）
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    volumes:
+      # 暂时注释掉数据文件挂载，让MySQL容器自动创建初始数据
+      # - ./docker/mysql/data:/var/lib/mysql
+      # 配置文件挂载到项目目录
+      - ./docker/mysql/config:/etc/mysql/conf.d
+      # 日志文件挂载到项目目录
+      - ./docker/mysql/logs:/var/log/mysql
+      # 初始化脚本挂载
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+      # 备份目录挂载
+      - ./docker/mysql/backups:/backups
+      # 备份脚本挂载
+      - ./docker/mysql/backup.sh:/usr/local/bin/backup.sh
+      - ./docker/mysql/manual_backup.sh:/usr/local/bin/manual_backup.sh
+    restart: always
+    networks:
+      - hxcoe-network
+    command:
+      # 设置服务器默认字符集为utf8mb4
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # 设置客户端连接默认字符集为utf8mb4
+      - --character-set-client-handshake=FALSE
+      - --init_connect=SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      # 其他配置
+      - --default-authentication-plugin=mysql_native_password
+      - --max_allowed_packet=256M
+      - --max_connections=500
+      - --init-file=/docker-entrypoint-initdb.d/99-reseed-plm.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # APS服务
+  aps:
+    build:
+      context: ./src/core-services/aps
+      dockerfile: Dockerfile
+    container_name: hxcoe003-aps
+    ports:
+      - "8087:8087"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=aps-service
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/aps_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=aps_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      # 数据库连接信息（用于启动脚本）
+      - DB_HOST=mysql
+      - DB_HOST_PORT=3306
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # HR服务
+  hr:
+    build:
+      context: ./src/core-services/hr
+      dockerfile: Dockerfile
+    container_name: hxcoe003-hr
+    ports:
+      - "8088:8083"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=hr-service
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/hr_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=hr_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - ERP_BOM_BASE_URL=http://bom:8085
+      - ERP_SRM_BASE_URL=http://srm:8092
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # OA服务
+  oa:
+    build:
+      context: ./src/core-services/oa
+      dockerfile: Dockerfile
+    container_name: hxcoe003-oa
+    ports:
+      - "8089:8085"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=oa-service
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/oa_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=oa_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # CRM服务
+  crm:
+    build:
+      context: ./src/core-services/crm
+      dockerfile: Dockerfile
+    container_name: hxcoe003-crm
+    ports:
+      - "8090:8086"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=crm-service
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/crm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=crm_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ERP服务
+  erp:
+    build:
+      context: ./src/core-services/erp
+      dockerfile: Dockerfile
+    container_name: hxcoe003-erp
+    ports:
+      - "8091:8081"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+      redis:
+        condition: service_healthy  # 等待Redis健康检查通过（避免REDIS_STREAM下健康检查/重试循环）
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=erp-service
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/erp_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=erp_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - HXCOE_INTEGRATION_TRANSPORT=REDIS_STREAM
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - HXCOE_INTEGRATION_REDIS_POLL_DELAY_MS=1000
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # BOM服务
+  bom:
+    build:
+      context: ./src/core-services/bom
+      dockerfile: Dockerfile
+    container_name: hxcoe003-bom
+    ports:
+      - "8085:8085"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=bom-service
+      - SERVER_PORT=8085
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/bom_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=bom_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # WMS服务
+  wms:
+    build:
+      context: ./src/core-services/wms
+      dockerfile: Dockerfile
+    container_name: hxcoe003-wms
+    ports:
+      - "8086:8086"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=wms-service
+      - SERVER_PORT=8086
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/wms_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=wms_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - WMS_ERP_BASE_URL=http://erp:8081
+      - WMS_SCM_BASE_URL=http://scm:8093
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # SCADA服务
+  scada:
+    build:
+      context: .
+      dockerfile: src/core-services/scada/Dockerfile
+    container_name: hxcoe003-scada
+    ports:
+      - "8093:8087"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=scada-service
+      - SERVER_PORT=8087
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/scada_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=scada_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # EMS服务
+  ems:
+    build:
+      context: .
+      dockerfile: src/core-services/ems/Dockerfile
+    container_name: hxcoe003-ems
+    ports:
+      - "3108:3108"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=ems-service
+      - SERVER_PORT=3108
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ems_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=ems_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CLOUD_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3108/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # AGV服务
+  agv:
+    build:
+      context: ./src/core-services/agv
+      dockerfile: Dockerfile
+    container_name: hxcoe003-agv
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=agv-service
+      - SERVER_PORT=8081
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/agv_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=agv_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # MES服务
+  mes:
+    build:
+      context: ./src/core-services/mes
+      dockerfile: Dockerfile
+    container_name: hxcoe003-mes
+    ports:
+      - "8095:8085"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=mes-service
+      - SERVER_PORT=8085
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mes_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=mes_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # LES服务
+  les:
+    build:
+      context: ./src/core-services/les
+      dockerfile: Dockerfile
+    container_name: hxcoe003-les
+    ports:
+      - "8092:8082"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=les-service
+      - SERVER_PORT=8082
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/les_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=les_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - LES_SIGN_UPLOAD_DIR=/data/les/sign
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    volumes:
+      - ./docker/les/uploads:/data/les
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # 网关服务
+  gateway:
+    build:
+      context: ./src/gateway
+      dockerfile: Dockerfile
+    container_name: hxcoe003-gateway
+    ports:
+      - "9000:9000"
+    restart: always
+    depends_on:
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=gateway
+      - SERVER_PORT=9000
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # QMS服务
+  qms:
+    build:
+      context: ./src/core-services/qms
+      dockerfile: Dockerfile
+    container_name: hxcoe003-qms
+    ports:
+      - "8099:8089"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=qms-service
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/qms_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=qms_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8089/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # SCRM服务
+  scrm:
+    build:
+      context: ./src/core-services/scrm
+      dockerfile: Dockerfile
+    container_name: hxcoe003-scrm
+    ports:
+      - "8018:8018"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+      redis:
+        condition: service_healthy  # 等待Redis健康检查通过
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=scrm-service
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/scrm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=scrm_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      # Redis配置
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=
+      - SPRING_REDIS_DATABASE=0
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+      # Playwright配置
+      - PLAYWRIGHT_BROWSERS_PATH=/app/.playwright/browsers
+    volumes:
+      # 挂载Playwright浏览器目录，避免每次部署都重新下载
+      - ./docker/scrm/.playwright:/app/.playwright
+      # 挂载日志目录
+      - ./logs/scrm:/app/logs
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8018/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # SRM服务
+  srm:
+    build:
+      context: ./src/core-services/srm
+      dockerfile: Dockerfile
+    container_name: hxcoe003-srm
+    ports:
+      - "8082:8092"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=srm-service
+      - SERVER_PORT=8092
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/srm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_HIKARI_JDBC_URL=jdbc:mysql://mysql:3306/srm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=srm_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SRM_SYNC_DATASOURCE_URL=jdbc:mysql://mysql:3306/srm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SRM_SYNC_DATASOURCE_USERNAME=srm_sync
+      - SRM_SYNC_DATASOURCE_PASSWORD=root
+      - SRM_SCM_BASE_URL=http://scm:8093
+      - SRM_ERP_BASE_URL=http://erp:8081
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8092/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # SCM服务
+  scm:
+    build:
+      context: ./src/core-services/scm
+      dockerfile: Dockerfile
+    container_name: hxcoe003-scm
+    ports:
+      - "8083:8093"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+      redis:
+        condition: service_healthy  # 等待Redis健康检查通过（避免REDIS_STREAM下健康检查/重试循环）
+    environment:
+      # Spring配置
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=scm-service
+      - SERVER_PORT=8093
+      # JVM配置
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 数据库配置
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/scm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=scm_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - HXCOE_INTEGRATION_TRANSPORT=HTTP
+      - SCM_INTEGRATION_PO_EVENT_WMS_ENABLED=true
+      - SCM_INTEGRATION_PO_EVENT_ERP_ENABLED=true
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - INTEGRATION_ERPFACT_RETRYDELAYMS=2000
+      # Nacos配置
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8093/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # PLM服务
+  plm:
+    build:
+      context: ./src/core-services/plm
+      dockerfile: Dockerfile
+    container_name: hxcoe003-plm
+    ports:
+      - "8084:8087"
+    volumes:
+      - ./docker/plm/files:/data/plm/files
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy  # 等待MySQL健康检查通过
+      nacos:
+        condition: service_healthy  # 等待Nacos健康检查通过
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=plm-service
+      - SERVER_PORT=8087
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      # 使用独立的 plm_db 数据库，避免与共享库冲突
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/plm_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=plm_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=true
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_FILE_EXTENSION=yaml
+      - SPRING_CLOUD_NACOS_CONFIG_GROUP=DEFAULT_GROUP
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Opportunity服务
+  opportunity:
+    build:
+      context: ./src/core-services/opportunity
+      dockerfile: Dockerfile
+    container_name: hxcoe003-opportunity
+    ports:
+      - "8094:8089"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=opportunity-service
+      - SERVER_PORT=8089
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/opportunity_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=opportunity_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8089/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # EAM服务
+  eam:
+    build:
+      context: ./src/core-services/eam
+      dockerfile: Dockerfile
+    container_name: hxcoe003-eam
+    ports:
+      - "8096:8095"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=eam-service
+      - SERVER_PORT=8095
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eam_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=eam_app
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8095/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # AI决策中枢服务（自动化刻度盘方案，P0骨架）
+  ai-brain:
+    build:
+      context: ./src/core-services/ai-brain
+      dockerfile: Dockerfile
+    container_name: hxcoe003-ai-brain
+    ports:
+      - "8097:8097"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=ai-brain-service
+      - SERVER_PORT=8097
+      - JVM_XMS=256m
+      - JVM_XMX=512m
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/ai_brain_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_CLOUD_NACOS_DISCOVERY_ENABLED=true
+      - SPRING_CLOUD_NACOS_CONFIG_ENABLED=false
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:nacos:nacos:8848
+      # P4-7 本地 LLM 接入：Ollama 运行于宿主机（数据不出域），容器经 host.docker.internal 访问
+      - AI_LLM_PROVIDER=ollama
+      - AI_LLM_OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - AI_LLM_OLLAMA_MODEL=qwen2.5:3b
+      - AI_LLM_OLLAMA_TIMEOUT_MS=90000
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8097/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # AI语音服务
+  ai-voice:
+    build:
+      context: ./src/core-services/ai-voice
+      dockerfile: Dockerfile
+    container_name: hxcoe003-ai-voice
+    ports:
+      - "8000:8000"
+    restart: always
+    depends_on:
+      nacos:
+        condition: service_healthy
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_SERVICE_NAME=ai-voice-service
+      - SERVICE_PORT=8000
+      - LOG_LEVEL=INFO
+    networks:
+      - hxcoe-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+# 网络配置（使用外部网络，与 nacos/mysql/redis 等基础设施同网络）
+networks:
+  hxcoe-network:
+    external: true
+    name: hxcoe00320260118_hxcoe-network
+
+# 数据持久化
+volumes:
+  nacos-data:
+  nacos-logs:

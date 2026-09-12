@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="seaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="55%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- 海星主体：圆角五臂星形 -->
+  <path d="M50,6 L60.5,37.5 L94,38.5 L67,58.5 L77,91 L50,71.5 L23,91 L33,58.5 L6,38.5 L39.5,37.5 Z"
+        fill="url(#seaGradient)"
+        stroke="url(#seaGradient)"
+        stroke-width="12"
+        stroke-linejoin="round"/>
+  <!-- 上半部高光 -->
+  <path d="M50,6 L60.5,37.5 L94,38.5 L67,58.5 L77,91 L50,71.5 L23,91 L33,58.5 L6,38.5 L39.5,37.5 Z"
+        fill="url(#lightGradient)"
+        stroke="none"/>
+  <!-- 中心装饰圆点 -->
+  <circle cx="50" cy="50" r="6.5" fill="#ffffff" fill-opacity="0.92"/>
+</svg>

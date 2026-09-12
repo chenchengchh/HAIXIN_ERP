@@ -1,0 +1,11 @@
+# Sample configuration file for Config Center
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-center
+
+# Common configuration for all services
+common:
+  message: "Hello from Config Center"

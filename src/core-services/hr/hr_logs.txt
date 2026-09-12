@@ -1,0 +1,500 @@
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?
+2026-01-13 07:06:34 [http-nio-8083-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        de1_0.id,
+        de1_0.created_by,
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?
+Hibernate: 
+    select
+        de1_0.id,
+        de1_0.created_by,
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?
+2026-01-13 07:06:34 [http-nio-8083-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        de1_0.id,
+        de1_0.created_by,
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?
+Hibernate: 
+    select
+        de1_0.id,
+        de1_0.created_by,
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?
+2026-01-13 07:06:34 [http-nio-8083-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        de1_0.id,
+        de1_0.created_by,
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?
+Hibernate: 
+    select
+        de1_0.id,
+        de1_0.created_by,
+        de1_0.created_time,
+        de1_0.department_code,
+        de1_0.description,
+        m1_0.id,
+        m1_0.birth_date,
+        m1_0.created_by,
+        m1_0.created_time,
+        m1_0.department_id,
+        m1_0.email,
+        m1_0.employee_code,
+        m1_0.gender,
+        m1_0.hire_date,
+        m1_0.id_card,
+        m1_0.leave_date,
+        m1_0.name,
+        m1_0.phone,
+        m1_0.position_id,
+        m1_0.remark,
+        m1_0.status,
+        m1_0.updated_by,
+        m1_0.updated_time,
+        de1_0.name,
+        p2_0.id,
+        p2_0.created_by,
+        p2_0.created_time,
+        p2_0.department_code,
+        p2_0.description,
+        m2_0.id,
+        m2_0.birth_date,
+        m2_0.created_by,
+        m2_0.created_time,
+        m2_0.department_id,
+        m2_0.email,
+        m2_0.employee_code,
+        m2_0.gender,
+        m2_0.hire_date,
+        m2_0.id_card,
+        m2_0.leave_date,
+        m2_0.name,
+        m2_0.phone,
+        m2_0.position_id,
+        m2_0.remark,
+        m2_0.status,
+        m2_0.updated_by,
+        m2_0.updated_time,
+        p2_0.name,
+        p2_0.parent_id,
+        p2_0.remark,
+        p2_0.status,
+        p2_0.updated_by,
+        p2_0.updated_time,
+        de1_0.remark,
+        de1_0.status,
+        de1_0.updated_by,
+        de1_0.updated_time 
+    from
+        hr_department de1_0 
+    left join
+        hr_employee m1_0 
+            on m1_0.id=de1_0.manager_id 
+    left join
+        hr_department p2_0 
+            on p2_0.id=de1_0.parent_id 
+    left join
+        hr_employee m2_0 
+            on m2_0.id=p2_0.manager_id 
+    where
+        de1_0.id=?

@@ -1,0 +1,2 @@
+com.hxcoe.common.integration.IntegrationTransportAutoConfiguration
+com.hxcoe.common.web.RequestContextAutoConfiguration

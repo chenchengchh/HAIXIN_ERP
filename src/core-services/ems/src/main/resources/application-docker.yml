@@ -1,0 +1,29 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+      config:
+        server-addr: nacos:8848
+        enabled: false
+        import-check:
+          enabled: false
+  datasource:
+    url: jdbc:mysql://mysql:3306/ems_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ems_app
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: 3108
+
+management:
+  health:
+    configserver:
+      enabled: false

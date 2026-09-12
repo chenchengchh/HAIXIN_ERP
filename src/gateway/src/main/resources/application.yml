@@ -1,0 +1,301 @@
+server:
+  port: 9000
+  shutdown: graceful
+  netty:
+    connection-timeout: 30s
+    idle-timeout: 60s
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  codec:
+    response:
+      charset: UTF-8
+      force-charset: true
+    web:
+      default-charset: UTF-8
+      json:
+        charset: UTF-8
+      xml:
+        charset: UTF-8
+      form:
+        charset: UTF-8
+      string:
+        charset: UTF-8
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-request: true
+      force-response: true
+    converters:
+      preferred-json-mapper: jackson
+  webflux:
+    codecs:
+      json:
+        charset: UTF-8
+      max-in-memory-size: 2MB
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: nacos:8848
+      config:
+        enabled: true
+        server-addr: nacos:8848
+        import-check:
+          enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+          lower-case-service-id: true
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 30s
+        pool:
+          type: fixed
+          max-connections: 500
+          acquire-timeout: 20000
+          max-idle-time: 60s
+          max-life-time: 300s
+      routes:
+        # AI语音服务路由
+        - id: ai-voice-service
+          uri: ws://ai-voice:8000
+          predicates:
+            - Path=/ai-voice/ws/**
+          filters:
+            - StripPrefix=0
+        # 登录服务路由
+        - id: login-service
+          uri: lb://oa-service
+          predicates:
+            - Path=/api/login
+          filters:
+            - StripPrefix=0
+        - id: iam-auth-service
+          uri: lb://oa-service
+          predicates:
+            - Path=/api/v1/iam/auth/**
+          filters:
+            - StripPrefix=0
+        # AGV服务路由 - 统一API前缀
+        - id: agv-service-v1
+          uri: lb://agv-service
+          predicates:
+            - Path=/api/v1/agv/**
+          filters:
+            - StripPrefix=0
+        # PLM服务路由 - 统一API前缀
+        - id: plm-service-v1
+          uri: lb://plm-service
+          predicates:
+            - Path=/api/v1/plm/**
+          filters:
+            - StripPrefix=0
+        # BOM服务路由 - 统一API前缀
+        - id: bom-service-v1
+          uri: lb://bom-service
+          predicates:
+            - Path=/api/v1/bom/**
+          filters:
+            - StripPrefix=0
+        # SCRM服务路由 - 统一API前缀
+        - id: scrm-service-v1
+          uri: lb://scrm-service
+          predicates:
+            - Path=/api/v1/scrm/**
+          filters:
+            - StripPrefix=0
+        # SCRM服务路由 - 抖音任务（统一API前缀）
+        - id: scrm-service-douyin-v1
+          uri: lb://scrm-service
+          predicates:
+            - Path=/api/v1/douyin/**
+          filters:
+            - StripPrefix=0
+        # WMS服务路由 - 统一API前缀
+        - id: wms-service-unified
+          uri: lb://wms-service
+          predicates:
+            - Path=/api/v1/wms/**
+          filters:
+            - StripPrefix=0
+        # SCADA服务路由 - 统一API前缀
+        - id: scada-service-unified
+          uri: lb://scada-service
+          predicates:
+            - Path=/api/v1/scada/**
+          filters:
+            - StripPrefix=0
+        # SCADA服务路由 - WebSocket
+        - id: scada-service-ws
+          uri: lb:ws://scada-service
+          predicates:
+            - Path=/ws/scada/**
+          filters:
+            - StripPrefix=0
+        # LES服务路由 - 统一API前缀
+        - id: les-service-unified
+          uri: lb://les-service
+          predicates:
+            - Path=/api/v1/les/**
+          filters:
+            - StripPrefix=0
+        # QMS服务路由 - 统一API前缀
+        - id: qms-service-v1
+          uri: lb://qms-service
+          predicates:
+            - Path=/api/v1/qms/**
+          filters:
+            - StripPrefix=0
+        # SCM服务路由 - 统一API前缀
+        - id: scm-service-v1
+          uri: lb://scm-service
+          predicates:
+            - Path=/api/v1/scm/**
+          filters:
+            - StripPrefix=0
+        # Opportunity服务路由 - 统一API前缀
+        - id: opportunity-service-v1
+          uri: lb://opportunity-service
+          predicates:
+            - Path=/api/v1/opportunity/**
+          filters:
+            - StripPrefix=0
+        # ERP服务路由 - 统一API前缀
+        - id: erp-service-unified
+          uri: lb://erp-service
+          predicates:
+            - Path=/api/v1/erp/**
+          filters:
+            - StripPrefix=0
+        # CRM服务路由 - 统一API前缀
+        - id: crm-service-unified
+          uri: lb://crm-service
+          predicates:
+            - Path=/api/v1/crm/**
+          filters:
+            - StripPrefix=0
+        # MES服务路由
+        - id: mes-service-unified
+          uri: lb://mes-service
+          predicates:
+            - Path=/api/v1/mes/**
+          filters:
+            - StripPrefix=0
+        # SRM服务路由 - 统一API前缀
+        - id: srm-service-v1
+          uri: lb://srm-service
+          predicates:
+            - Path=/api/v1/srm/**
+          filters:
+            - StripPrefix=0
+        # OA服务路由 - 统一API前缀
+        - id: oa-service-unified
+          uri: lb://oa-service
+          predicates:
+            - Path=/api/v1/oa/**
+          filters:
+            - StripPrefix=0
+        # APS服务路由 - 统一API前缀
+        - id: aps-service-unified
+          uri: lb://aps-service
+          predicates:
+            - Path=/api/v1/aps/**
+          filters:
+            - StripPrefix=0
+        # HR服务路由 - 统一API前缀
+        - id: hr-service-unified
+          uri: lb://hr-service
+          predicates:
+            - Path=/api/v1/hr/**
+          filters:
+            - StripPrefix=0
+        # EMS服务路由 - 统一API前缀
+        - id: ems-service-unified
+          uri: lb://ems-service
+          predicates:
+            - Path=/api/v1/ems/**
+          filters:
+            - StripPrefix=0
+        # EAM服务路由 - 统一API前缀
+        - id: eam-service-unified
+          uri: lb://eam-service
+          predicates:
+            - Path=/api/v1/eam/**
+          filters:
+            - StripPrefix=0
+        # AI决策中枢服务路由 - 统一API前缀
+        - id: ai-brain-service-unified
+          uri: lb://ai-brain-service
+          predicates:
+            - Path=/api/v1/ai-brain/**
+          filters:
+            - StripPrefix=0
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: '*'
+            allowedMethods: '*'
+            allowedHeaders: '*'
+            allowCredentials: true
+  # Spring Security配置
+  security:
+    user:
+      name: admin
+      password: admin123
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,beans,configprops,httptrace,threaddump,heapdump,scheduledtasks,loggers,mappings
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:ienYzJbjd3SaGlUsZ2ymuHpr9K58LBMc4C7TwqRg6VIhoWtPXO0DAf1xkNEvQF}
+  expiration: 3600000
+  header: Authorization
+  prefix: Bearer
+  enabled: true
+  exclude-patterns:
+    - "^/api/login$"
+    - "^/api/v1/iam/auth/login$"
+    - "^/iam/auth/login$"
+    - "^/actuator($|/.*)"
+    - "^/swagger-ui($|/.*)"
+    - "^/swagger-ui.html$"
+    - "^/v3/api-docs($|/.*)"
+    # AI语音服务WebSocket端点（WebSocket无法携带Authorization头，需放行）
+    - "^/ai-voice/ws/.+$"
+    - "^/ai-voice/health$"
+    - "^/ai-voice/info$"
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+    com.alibaba.nacos: WARN
+    com.hxcoe.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.loadbalancer: WARN

@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+      config:
+        server-addr: nacos:8848
+        import-check:
+          enabled: false
+  config:
+    import: optional:nacos:nacos:8848
+  datasource:
+    url: jdbc:mysql://mysql:3306/scada_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: scada_app
+    password: root
+
+server:
+  port: 8087

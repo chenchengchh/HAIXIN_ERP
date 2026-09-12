@@ -1,0 +1,107 @@
+server:
+  port: 8092
+
+spring:
+  application:
+    name: srm-service
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: localhost:8848
+      config:
+        enabled: true
+        server-addr: localhost:8848
+        import-check:
+          enabled: false
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 3000
+            read-timeout: 5000
+  config:
+    import: optional:nacos:localhost:8848
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/srm_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    hikari:
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/srm_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:srm_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+# 日志配置
+logging:
+  level:
+    com.hxcoe.srm: debug
+    org.springframework: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n'
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+# SRM模块配置
+srm:
+  # 供应商准入配置
+  supplier-onboarding:
+    default-category: A
+    qualification-expiry-days: 365
+    approval-levels: 3
+  # 采购流程配置
+  procurement:
+    default-payment-terms: 30
+    quote-validity-days: 7
+    min-suppliers-for-quote: 3
+    po-write-enabled: false
+
+  sync-datasource:
+    url: ${SRM_SYNC_DATASOURCE_URL:jdbc:mysql://mysql:3306/srm_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: ${SRM_SYNC_DATASOURCE_USERNAME:srm_sync}
+    password: ${SRM_SYNC_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # 绩效评估配置
+  performance:
+    evaluation-cycle: 3
+    kpi-weight-delivery: 0.4
+    kpi-weight-quality: 0.3
+    kpi-weight-price: 0.2
+    kpi-weight-service: 0.1
+  # 风险管控配置
+  risk-management:
+    delivery-delay-threshold: 5
+    quality-rejection-threshold: 0.05
+    financial-risk-score-threshold: 70
+
+  integration:
+    supplier-event-retry-delay-ms: 60000
+
+  data-quality:
+    refresh-delay-ms: 86400000
+    refresh-initial-delay-ms: 60000
+
+  master-data:
+    material-write-enabled: false
+
+hxcoe:
+  integration:
+    rabbit:
+      queue-scm-po-events-srm: srm.po-events.v1

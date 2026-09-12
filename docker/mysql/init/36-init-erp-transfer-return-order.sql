@@ -1,0 +1,41 @@
+CREATE TABLE IF NOT EXISTS erp_transfer_order (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  transfer_no VARCHAR(64) NOT NULL,
+  source_no VARCHAR(64) NULL,
+  from_warehouse_code VARCHAR(64) NULL,
+  to_warehouse_code VARCHAR(64) NULL,
+  status VARCHAR(32) NOT NULL,
+  outbound_order_id BIGINT NULL,
+  outbound_order_no VARCHAR(64) NULL,
+  outbound_status VARCHAR(32) NULL,
+  asn_id BIGINT NULL,
+  asn_no VARCHAR(64) NULL,
+  inbound_status VARCHAR(32) NULL,
+  items_json JSON NULL,
+  remark VARCHAR(500) NULL,
+  created_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_erp_transfer_order_no (transfer_no),
+  KEY idx_erp_transfer_source_no (source_no),
+  KEY idx_erp_transfer_outbound_order_no (outbound_order_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ERP transfer order header';
+
+CREATE TABLE IF NOT EXISTS erp_purchase_return_order (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  return_no VARCHAR(64) NOT NULL,
+  source_no VARCHAR(64) NULL,
+  supplier_code VARCHAR(64) NULL,
+  supplier_name VARCHAR(255) NULL,
+  warehouse_code VARCHAR(64) NULL,
+  status VARCHAR(32) NOT NULL,
+  outbound_order_id BIGINT NULL,
+  outbound_order_no VARCHAR(64) NULL,
+  outbound_status VARCHAR(32) NULL,
+  items_json JSON NULL,
+  remark VARCHAR(500) NULL,
+  created_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_erp_purchase_return_no (return_no),
+  KEY idx_erp_purchase_return_source_no (source_no),
+  KEY idx_erp_purchase_return_outbound_order_no (outbound_order_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ERP purchase return header';

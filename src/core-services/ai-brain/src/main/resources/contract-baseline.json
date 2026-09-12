@@ -1,0 +1,11 @@
+{
+  "eam_db.eam_spare_part": ["id", "code", "name", "current_stock", "safety_stock"],
+  "eam_db.eam_spare_inventory": ["id", "spare_id", "quantity"],
+  "eam_db.eam_fault_record": ["id", "equipment_id", "report_time", "type", "status"],
+  "erp_db.erp_voucher": ["id", "voucher_no", "status", "debit_total", "credit_total"],
+  "erp_db.erp_voucher_item": ["id", "voucher_id", "debit_amount", "credit_amount"],
+  "mes_db.mes_work_order": ["id", "work_order_no", "status", "start_time", "create_time"],
+  "wms_db.wms_inventory": ["id", "material_code", "quantity", "warehouse_code", "status"],
+  "qms_db.qms_nc_registration": ["id", "registration_no", "defect_type", "material_code", "registration_time", "status"],
+  "qms_db.qms_nc_disposal": ["id", "registration_id", "process_result"]
+}

@@ -1,0 +1,43 @@
+# 构建产物
+target/
+*.jar
+*.war
+*.class
+node_modules/
+frontend/dist/
+dist/
+release/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 日志
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 运行时数据（不入库）
+docker/mysql/data/
+docker/redis/data/
+docker/grafana/data/
+docker/loki/data/
+docker/prometheus/data/
+docker/jars/
+
+# 大模型文件（通过 scripts/ 下载，见 docs/模型下载.md）
+frontend/public/models/
+*.pt
+
+# 敏感文件
+.env
+*.token.txt
+token.txt
+
+# 临时文件
+*.png
+*.dumpstream

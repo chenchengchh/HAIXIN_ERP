@@ -1,0 +1,153 @@
+server:
+  port: 8085
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: oa-service
+  profiles:
+    active: dev
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/oa_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useTimezone=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:oa_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # Hikari连接池配置
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+      pool-name: OA-Service-HikariCP
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    naming:
+      physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        batch_size: 20
+        cache.use_second_level_cache: false
+        cache.use_query_cache: false
+        order_inserts: true
+        order_updates: true
+        jdbc.batch_versioned_data: true
+        jdbc.fetch_size: 50
+    defer-datasource-initialization: true
+    open-in-view: false
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: localhost:8848
+      config:
+        enabled: true
+        server-addr: localhost:8848
+        file-extension: yml
+        group: DEFAULT_GROUP
+        import-check:
+          enabled: false
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 3000
+            read-timeout: 5000
+
+jwt:
+  secret: ${JWT_SECRET:ienYzJbjd3SaGlUsZ2ymuHpr9K58LBMc4C7TwqRg6VIhoWtPXO0DAf1xkNEvQF}
+  expiration: ${JWT_EXPIRATION:3600000}
+  header: Authorization
+  prefix: Bearer
+
+oa:
+  integration:
+    hr-base-url: ${OA_HR_BASE_URL:http://hr:8083}
+  iam:
+    account-status-sync:
+      enabled: true
+      delay-ms: 300000
+      initial-delay-ms: 60000
+  config:
+    import: optional:nacos:localhost:8848
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-response: true
+  messages:
+    encoding: UTF-8
+    basename: messages
+  jackson:
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Shanghai
+    locale: zh_CN
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: true
+      write-dates-with-zone-id: true
+    date-format: yyyy-MM-dd HH:mm:ss
+  sql:
+    init:
+      mode: never
+      platform: mysql
+      encoding: UTF-8
+
+logging:
+  level:
+    com.hxcoe.oa: info
+    org.springframework.web: info
+    org.springframework.transaction: info
+    org.hibernate: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/oa-service.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 100MB
+  logback:
+    rollingpolicy:
+      file-name-pattern: logs/oa-service.%d{yyyy-MM-dd}.%i.log
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 100MB
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 服务信息配置
+info:
+  app:
+    name: oa-service
+    version: 1.0.0-SNAPSHOT
+    description: 办公自动化系统

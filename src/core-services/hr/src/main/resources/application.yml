@@ -1,0 +1,133 @@
+server:
+  port: 8083
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: hr-service
+  profiles:
+    active: dev
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/hr_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useTimezone=true&createDatabaseIfNotExist=true}
+    username: ${SPRING_DATASOURCE_USERNAME:hr_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # Hikari连接池配置
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+      pool-name: HR-Service-HikariCP
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    naming:
+      physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    properties:
+      hibernate:
+        format_sql: true
+        batch_size: 20
+        cache.use_second_level_cache: false
+        cache.use_query_cache: false
+        order_inserts: true
+        order_updates: true
+        jdbc.batch_versioned_data: true
+        jdbc.fetch_size: 50
+    defer-datasource-initialization: true
+    open-in-view: false
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: localhost:8848
+      config:
+        enabled: true
+        server-addr: localhost:8848
+        file-extension: yml
+        group: DEFAULT_GROUP
+        import-check:
+          enabled: false
+  config:
+    import: optional:nacos
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-response: true
+    converters:
+      preferred-json-mapper: jackson
+  messages:
+    encoding: UTF-8
+    basename: messages
+  jackson:
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Shanghai
+    locale: zh_CN
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: true
+      write-dates-with-zone-id: true
+    date-format: yyyy-MM-dd HH:mm:ss
+  sql:
+    init:
+      mode: never
+      platform: mysql
+      encoding: UTF-8
+
+logging:
+  level:
+    com.hxcoe.hr: info
+    org.springframework.web: info
+    org.springframework.transaction: info
+    org.hibernate: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/hr-service.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 100MB
+  logback:
+    rollingpolicy:
+      file-name-pattern: logs/hr-service.%d{yyyy-MM-dd}.%i.log
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 100MB
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 服务信息配置
+info:
+  app:
+    name: hr-service
+    version: 1.0.0-SNAPSHOT
+    description: 人力资源管理系统

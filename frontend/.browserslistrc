@@ -1,0 +1,12 @@
+# 最新的2个版本的主流浏览器
+last 2 chrome versions
+last 2 firefox versions
+last 2 safari versions
+last 2 edge versions
+
+# 支持全球90%的浏览器
+autoprefixer: 90%
+
+# 不支持IE浏览器
+not dead
+not ie <= 11

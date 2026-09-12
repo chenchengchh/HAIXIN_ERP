@@ -1,0 +1,99 @@
+server:
+  port: 8086
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: wms-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        import-check:
+          enabled: false
+  config:
+    import: optional:nacos:localhost:8848
+  datasource:
+    # Align local defaults with docker/runtime to avoid writing back into the legacy shared schema.
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/wms_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+# 日志配置
+logging:
+  level:
+    com.hxcoe.wms: debug
+    org.springframework: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [service:%X{service:-},traceId:%X{traceId:-},requestId:%X{requestId:-},userId:%X{userId:-},eventId:%X{eventId:-}] %logger{36} - %msg%n'
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+# WMS模块配置
+wms:
+  # 入库管理配置
+  inbound:
+    default-receiving-area: RCV_AREA
+    putaway-strategy: ABC
+    inspection-required: true
+  # 库存管理配置
+  inventory:
+    cycle-count-frequency: 30
+    abc-classification: true
+    lot-traceability: true
+    expiration-management: true
+  # 出库管理配置
+  outbound:
+    picking-strategy: WAVE_PICK
+    packing-required: true
+    shipping-validation: true
+  # 仓储资源配置
+  resource:
+    default-warehouse: MAIN_WH
+    zone-layout: ZONE_A,ZONE_B,ZONE_C
+    rack-configuration: DEEP_LANE
+
+  integration:
+    retry-delay-ms: 60000
+    masterdata-retry-delay-ms: 60000
+    scm-base-url: ${WMS_SCM_BASE_URL:http://scm:8093}
+    erp-base-url: ${WMS_ERP_BASE_URL:http://erp:8081}
+
+  data-quality:
+    refresh-delay-ms: 86400000
+    refresh-initial-delay-ms: 60000
+
+hxcoe:
+  integration:
+    redis:
+      group-scm-po-events: wms-service
+      consumer-scm-po-events: wms-1
+    rabbit:
+      queue-scm-po-events-wms: wms.po-events.v1

@@ -1,0 +1,23 @@
+# 开发环境配置
+server:
+  port: 8083
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  datasource:
+    # Keep the dev profile on the same owner database as runtime to prevent local schema drift.
+    url: jdbc:mysql://localhost:3307/hr_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useTimezone=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+logging:
+  level:
+    com.hxcoe.hr: debug
+    org.springframework.web: debug
+    org.springframework.web.servlet.mvc.method: debug
+    org.springframework.context.annotation: debug

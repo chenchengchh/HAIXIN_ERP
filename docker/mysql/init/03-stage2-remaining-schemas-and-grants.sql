@@ -1,0 +1,34 @@
+CREATE DATABASE IF NOT EXISTS `bom_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `les_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `scada_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `ems_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `agv_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `scrm_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `opportunity_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `eam_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `plm_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE mysql;
+
+CREATE USER IF NOT EXISTS 'bom_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'les_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'scada_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'ems_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'agv_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'scrm_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'opportunity_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'eam_app'@'%' IDENTIFIED BY 'root';
+CREATE USER IF NOT EXISTS 'plm_app'@'%' IDENTIFIED BY 'root';
+
+GRANT ALL PRIVILEGES ON `bom_db`.* TO 'bom_app'@'%';
+GRANT ALL PRIVILEGES ON `les_db`.* TO 'les_app'@'%';
+GRANT ALL PRIVILEGES ON `scada_db`.* TO 'scada_app'@'%';
+GRANT ALL PRIVILEGES ON `ems_db`.* TO 'ems_app'@'%';
+GRANT ALL PRIVILEGES ON `agv_db`.* TO 'agv_app'@'%';
+GRANT ALL PRIVILEGES ON `scrm_db`.* TO 'scrm_app'@'%';
+GRANT ALL PRIVILEGES ON `opportunity_db`.* TO 'opportunity_app'@'%';
+GRANT ALL PRIVILEGES ON `eam_db`.* TO 'eam_app'@'%';
+GRANT ALL PRIVILEGES ON `plm_db`.* TO 'plm_app'@'%';
+
+FLUSH PRIVILEGES;
+

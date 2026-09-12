@@ -1,0 +1,30 @@
+server:
+  port: 8848
+
+spring:
+  application:
+    name: registry
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        import-check:
+          enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,beans,configprops,httptrace,threaddump,heapdump,scheduledtasks,loggers,mappings
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true

@@ -1,0 +1,60 @@
+package com.hxcoe.erp.rules;
+
+// ERP系统规则文件
+// 包含销售、采购、生产等核心业务规则
+
+// 销售订单处理规则
+rule "SalesOrderPriorityRule"
+    when
+        $order : SalesOrder(priority == null || priority < 1)
+    then
+        // 设置默认优先级
+        $order.setPriority(1);
+        update($order);
+        System.out.println("Set default priority for sales order: " + $order.getId());
+end
+
+// 采购需求生成规则
+rule "PurchaseRequirementGenerationRule"
+    when
+        $inventory : Inventory(itemType == "MATERIAL", quantity < safetyStock)
+        not PurchaseRequirement(itemId == $inventory.getItemId(), status == "PENDING")
+    then
+        // 生成采购需求
+        PurchaseRequirement requirement = new PurchaseRequirement();
+        requirement.setItemId($inventory.getItemId());
+        requirement.setRequiredQuantity($inventory.getSafetyStock() - $inventory.getQuantity());
+        requirement.setStatus("PENDING");
+        // 这里需要添加保存采购需求的逻辑
+        System.out.println("Generated purchase requirement for item: " + $inventory.getItemId());
+end
+
+// 生产计划排程规则
+rule "ProductionScheduleRule"
+    when
+        $productionOrder : ProductionOrder(status == "READY", scheduledDate == null)
+        $resource : Resource(type == "MACHINE", capacity > 0)
+    then
+        // 分配生产资源并设置排程日期
+        $productionOrder.setResourceId($resource.getId());
+        $productionOrder.setScheduledDate(new java.util.Date());
+        $productionOrder.setStatus("SCHEDULED");
+        update($productionOrder);
+        System.out.println("Scheduled production order: " + $productionOrder.getId() + " on resource: " + $resource.getId());
+end
+
+// 库存预警规则
+rule "InventoryWarningRule"
+    when
+        $inventory : Inventory(quantity < safetyStock * 0.8)
+        not InventoryWarning(itemId == $inventory.getItemId(), resolved == false)
+    then
+        // 生成库存预警
+        InventoryWarning warning = new InventoryWarning();
+        warning.setItemId($inventory.getItemId());
+        warning.setCurrentQuantity($inventory.getQuantity());
+        warning.setSafetyStock($inventory.getSafetyStock());
+        warning.setResolved(false);
+        // 这里需要添加保存库存预警的逻辑
+        System.out.println("Generated inventory warning for item: " + $inventory.getItemId());
+end

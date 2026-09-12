@@ -1,0 +1,3 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.hxcoe.common.integration.IntegrationTransportEnvironmentPostProcessor,\
+com.hxcoe.common.web.RequestLoggingEnvironmentPostProcessor

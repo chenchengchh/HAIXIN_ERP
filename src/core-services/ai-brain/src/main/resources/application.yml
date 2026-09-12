@@ -1,0 +1,42 @@
+server:
+  port: 8097
+
+spring:
+  application:
+    name: ai-brain-service
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/ai_brain_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# AI 决策引擎配置
+ai:
+  llm:
+    # LLM 翻译层提供者：rule=模板降级实现（默认，零外部依赖）/ ollama=本地开源模型（数据不出域）
+    # 切换 ollama 后 OllamaLlmService 装配，RuleBasedLlmService 卸载；LLM 调用失败统一静默降级为规则逻辑
+    provider: ${AI_LLM_PROVIDER:rule}
+    ollama:
+      # Ollama 服务地址（容器内经 host.docker.internal 访问宿主机 Ollama）
+      base-url: ${AI_LLM_OLLAMA_BASE_URL:http://host.docker.internal:11434}
+      # 默认模型（qwen2.5:3b 轻量快速；可切换 qwen3.5:4b 提质）
+      model: ${AI_LLM_OLLAMA_MODEL:qwen2.5:3b}
+      # 调用超时（毫秒）：本地模型 CPU 推理较慢，默认 90s
+      timeout-ms: ${AI_LLM_OLLAMA_TIMEOUT_MS:90000}
+      # 最大生成 token 数（限制输出长度防失控，同时压低推理耗时）
+      max-tokens: ${AI_LLM_OLLAMA_MAX_TOKENS:1024}
+  action:
+    # P4-1 动作执行引擎：CONFIRM 级动作经网关路由到目标模块现有业务端点
+    gateway-url: ${AI_ACTION_GATEWAY_URL:http://gateway:9000}
