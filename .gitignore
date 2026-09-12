@@ -40,4 +40,5 @@ token.txt
 
 # 临时文件
 *.png
+!docs/images/*.png
 *.dumpstream
