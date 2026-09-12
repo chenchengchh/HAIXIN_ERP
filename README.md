@@ -190,3 +190,15 @@ python scripts/download_voice_models.py
 | [docs/依赖安装.md](docs/依赖安装.md) | JDK/Maven/Node/Docker 等依赖与版本要求 |
 | [docs/模型下载.md](docs/模型下载.md) | AI 语音模型下载、放置路径、验证方式 |
 | [docs/配置说明.md](docs/配置说明.md) | .env 变量、docker-compose、Nacos 配置说明 |
+
+## 九、联系作者
+
+如有项目使用、二次开发、技术交流等需求，欢迎联系：
+
+- **邮箱**：[chenchengchh@126.com](mailto:chenchengchh@126.com)
+
+如果这个项目对您有帮助，欢迎请作者喝杯咖啡 ☕（微信扫码打赏）：
+
+<p align="center">
+  <img src="docs/images/2wm.jpg" alt="打赏二维码" width="280" />
+</p>
