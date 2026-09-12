@@ -8,6 +8,20 @@
 
 ---
 
+## 系统界面预览
+
+| 登录页 | 工作台（运营概览） |
+|:---:|:---:|
+| ![登录页](docs/images/01-登录页.png) | ![工作台](docs/images/02-工作台.png) |
+| **ERP 系统** | **MES 制造执行** |
+| ![ERP系统](docs/images/03-ERP系统.png) | ![MES制造执行](docs/images/04-MES制造执行.png) |
+| **AGV 调度管理** | |
+| ![AGV调度](docs/images/05-AGV调度.png) | |
+
+> 更多界面（CRM、SRM、WMS、QMS、APS 甘特图、供应链 3D 可视化等）可在启动系统后于左侧菜单逐模块查看。
+
+---
+
 ## 一、系统架构
 
 ```
